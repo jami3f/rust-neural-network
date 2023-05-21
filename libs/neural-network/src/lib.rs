@@ -173,18 +173,69 @@ mod tests {
             }
         }
     }
-    // mod network {
-    //     mod random {
-    //         #[test]
-    //         fn test() {
-    //             todo!()
-    //         }
-    //     }
-    //     mod propagate {
-    //         #[test]
-    //         fn test() {
-    //             todo!()
-    //         }
-    //     }
-    // }
+    mod network {
+        use super::*;
+        mod random {
+            use super::*;
+            #[test]
+            fn test() {
+                let mut rng = ChaCha8Rng::from_seed(Default::default());
+
+                let layer_topologies = &[
+                    LayerTopology { neurons: 3 },
+                    LayerTopology { neurons: 2 },
+                    LayerTopology { neurons: 1 },
+                ];
+
+                let network = Network::random(&mut rng, layer_topologies);
+
+                let expected_biases: Vec<Vec<f32>> =
+                    vec![vec![-0.6255188, 0.5238807], vec![-0.102499366]];
+                let actual_biases: Vec<Vec<f32>> = network
+                    .layers
+                    .iter()
+                    .map(|layer| layer.neurons.iter().map(|neuron| neuron.bias).collect())
+                    .collect();
+
+                for i in 0..expected_biases.len() {
+                    assert_relative_eq!(expected_biases[i].as_slice(), actual_biases[i].as_slice());
+                }
+
+                let expected_weights = vec![
+                    vec![
+                        vec![0.67383957, 0.8181262, 0.26284897],
+                        vec![-0.53516835, 0.069369674, -0.7648182],
+                    ],
+                    vec![vec![-0.48879617, -0.19277132]],
+                ];
+
+                let actual_weights: Vec<Vec<Vec<f32>>> = network
+                    .layers
+                    .iter()
+                    .map(|layer| {
+                        layer
+                            .neurons
+                            .iter()
+                            .map(|neuron| neuron.weights.clone())
+                            .collect()
+                    })
+                    .collect();
+
+                for i in 0..expected_weights.len() {
+                    for j in 0..expected_weights[i].len() {
+                        assert_relative_eq!(
+                            expected_weights[i][j].as_slice(),
+                            actual_weights[i][j].as_slice()
+                        );
+                    }
+                }
+            }
+        }
+        mod propagate {
+            #[test]
+            fn test() {
+                todo!()
+            }
+        }
+    }
 }
