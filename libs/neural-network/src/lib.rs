@@ -36,6 +36,7 @@ impl Layer {
     pub fn new(neurons: Vec<Neuron>) -> Self {
         Self { neurons }
     }
+
     pub fn random(rng: &mut dyn RngCore, input_neurons: usize, output_neurons: usize) -> Self {
         let neurons = (0..output_neurons)
             .map(|_| Neuron::random(rng, input_neurons))
@@ -232,9 +233,24 @@ mod tests {
             }
         }
         mod propagate {
+            use super::*;
             #[test]
             fn test() {
-                todo!()
+                let layers = &[
+                    Layer::new(vec![
+                        Neuron::new(0.0, vec![-0.5, -0.4, -0.3]),
+                        Neuron::new(0.0, vec![-0.2, -0.1, 0.0]),
+                    ]),
+                    Layer::new(vec![Neuron::new(0.0, vec![-0.5, 0.5])]),
+                ];
+                let network = Network {
+                    layers: vec![layers[0].clone(), layers[1].clone()],
+                };
+
+                let expected = layers[1].propagate(layers[0].propagate(vec![0.5, 0.6, 0.7]));
+                let actual = network.propagate(vec![0.5, 0.6, 0.7]);
+
+                assert_relative_eq!(expected.as_slice(), actual.as_slice());
             }
         }
     }
