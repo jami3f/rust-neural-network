@@ -1,8 +1,8 @@
-#![feature(type_alias_impl_trait)]
+#![feature(impl_trait_in_assoc_type)]
 
 use std::ops::Index;
 
-use rand::{seq::SliceRandom, Rng, RngCore};
+use rand::{seq::SliceRandom, RngCore};
 
 pub struct RouletteWheelSelection;
 
@@ -25,6 +25,7 @@ impl SelectionMethod for RouletteWheelSelection {
 
 pub trait Individual {
     fn fitness(&self) -> f32;
+    fn chromosome(&self) -> &Chromosome;
 }
 
 pub trait SelectionMethod {
@@ -95,8 +96,8 @@ where
         assert!(!population.is_empty());
         (0..population.len())
             .map(|_| {
-                let parent_a = self.selection_method.select(rng, population);
-                let parent_b = self.selection_method.select(rng, population);
+                let parent_a = self.selection_method.select(rng, population).chromosome();
+                let parent_b = self.selection_method.select(rng, population).chromosome();
                 todo!()
             })
             .collect()
@@ -111,6 +112,7 @@ mod tests {
         use maplit;
         use rand::SeedableRng;
         use rand_chacha::ChaCha8Rng;
+        use core::panic;
         use std::collections::BTreeMap;
 
         #[cfg(test)]
@@ -127,6 +129,10 @@ mod tests {
         impl Individual for TestIndividual {
             fn fitness(&self) -> f32 {
                 self.fitness
+            }
+
+            fn chromosome(&self) -> &Chromosome {
+                panic!("Not supported for TestIndividual")
             }
         }
 
@@ -230,6 +236,20 @@ mod tests {
                 assert_eq!(chromosome[0], 3.0);
                 assert_eq!(chromosome[1], 1.0);
                 assert_eq!(chromosome[2], 2.0);
+            }
+        }
+
+        mod into_iterator {
+            use super::*;
+
+            #[test]
+            fn test() {
+                let chromosome: Chromosome = chromosome();
+                let genes:Vec<_> = chromosome.into_iter().collect();
+
+                assert_eq!(genes[0], 3.0);
+                assert_eq!(genes[1], 1.0);
+                assert_eq!(genes[2], 2.0);
             }
         }
     }
