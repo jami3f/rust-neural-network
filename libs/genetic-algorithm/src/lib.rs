@@ -2,7 +2,48 @@
 
 use std::ops::Index;
 
-use rand::{seq::SliceRandom, RngCore};
+use rand::{seq::SliceRandom, RngCore, Rng};
+
+pub trait CrossoverMethod {
+    fn crossover(
+        &self,
+        rng: &mut dyn RngCore,
+        parent_a: Chromosome,
+        parent_b: Chromosome,
+    ) -> Chromosome;
+}
+
+pub struct UniformCrossover;
+
+impl UniformCrossover {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl CrossoverMethod for UniformCrossover {
+    fn crossover(
+            &self,
+            rng: &mut dyn RngCore,
+            parent_a: Chromosome,
+            parent_b: Chromosome,
+        ) -> Chromosome {
+            assert_eq!(parent_a.len(), parent_b.len());
+        let mut child = Vec::new();
+        let gene_count = parent_a.len();
+
+        for gene_idx in 0..gene_count {
+            let gene = if rng.gen_bool(0.5){
+                parent_a[gene_idx]
+            } else{
+                parent_b[gene_idx]
+            };
+
+            child.push(gene)
+        }
+        child.into_iter().collect()
+    }
+}
 
 pub struct RouletteWheelSelection;
 
@@ -109,10 +150,10 @@ mod tests {
     use super::*;
     mod genetic_algorithm {
         use super::*;
+        use core::panic;
         use maplit;
         use rand::SeedableRng;
         use rand_chacha::ChaCha8Rng;
-        use core::panic;
         use std::collections::BTreeMap;
 
         #[cfg(test)]
@@ -245,7 +286,7 @@ mod tests {
             #[test]
             fn test() {
                 let chromosome: Chromosome = chromosome();
-                let genes:Vec<_> = chromosome.into_iter().collect();
+                let genes: Vec<_> = chromosome.into_iter().collect();
 
                 assert_eq!(genes[0], 3.0);
                 assert_eq!(genes[1], 1.0);
