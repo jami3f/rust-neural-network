@@ -1,5 +1,11 @@
 use nalgebra as na;
 use rand::{Rng, RngCore};
+pub use self::{animal::*, food::*, world::*, eye::*};
+
+mod animal;
+mod food;
+mod world;
+mod eye;
 
 pub struct Simulation {
     world: World,
@@ -15,69 +21,30 @@ impl Simulation {
     pub fn world(&self) -> &World {
         &self.world
     }
-}
 
-#[derive(Debug)]
-pub struct World {
-    animals: Vec<Animal>,
-    foods: Vec<Food>,
-}
-
-impl World {
-    pub fn random(rng: &mut dyn RngCore) -> Self {
-        let animals = (0..40).map(|_| Animal::random(rng)).collect();
-        let foods = (0..60).map(|_| Food::random(rng)).collect();
-
-        Self { animals, foods }
+    pub fn step(&mut self, rng: &mut dyn RngCore) {
+        self.process_collisions(rng);
+        self.process_movements();
     }
 
-    pub fn animals(&self) -> &[Animal] {
-        &self.animals
-    }
+    fn process_collisions(&mut self, rng: &mut dyn RngCore) {
+        for animal in &mut self.world.animals {
+            for food in &mut self.world.foods {
+                let distance = na::distance(&animal.position,& food.position);
 
-    pub fn foods(&self) -> &[Food] {
-        &self.foods
-    }
-}
-
-#[derive(Debug)]
-pub struct Animal {
-    position: na::Point2<f32>,
-    rotation: na::Rotation2<f32>,
-    speed: f32,
-}
-
-impl Animal {
-    pub fn random(rng: &mut dyn RngCore) -> Self {
-        Self {
-            position: rng.gen(),
-            rotation: rng.gen(),
-            speed: 0.002,
+                if distance <= 0.01 {
+                    food.position = rng.gen();
+                }
+            }
         }
     }
 
-    pub fn position(&self) -> na::Point2<f32> {
-        self.position
-    }
+    fn process_movements(&mut self) {
+        for animal in &mut self.world.animals {
+            animal.position += animal.rotation * na::Vector2::new(0.0, animal.speed);
 
-    pub fn rotation(&self) -> na::Rotation2<f32> {
-        self.rotation
-    }
-}
-
-#[derive(Debug)]
-pub struct Food {
-    position: na::Point2<f32>,
-}
-
-impl Food {
-    pub fn random(rng: &mut dyn RngCore) -> Self {
-        Self {
-            position: rng.gen(),
+            animal.position.x = na::wrap(animal.position.x, 0.0, 1.0);
+            animal.position.y = na::wrap(animal.position.y, 0.0, 1.0);
         }
-    }
-
-    pub fn position(&self) -> na::Point2<f32> {
-        self.position
     }
 }
