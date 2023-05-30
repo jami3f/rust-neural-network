@@ -15,4 +15,10 @@ impl Food {
     pub fn position(&self) -> na::Point2<f32> {
         self.position
     }
+
+    pub fn new(x: f32, y: f32) -> Self {
+        Self {
+            position: na::Point2::new(x, y),
+        }
+    }
 }
